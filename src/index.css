@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Apex Kart — F1-inspired racing dark theme. All colors HSL. */
+
+@layer base {
+  :root {
+    /* Asphalt / tarmac base */
+    --background: 240 6% 4%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 5% 9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 5% 9%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Kerb red — primary brand */
+    --primary: 352 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 14%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 4% 12%;
+    --muted-foreground: 240 5% 60%;
+
+    /* Volt lime — accent / "fastest lap" */
+    --accent: 72 100% 50%;
+    --accent-foreground: 240 6% 4%;
+
+    --destructive: 352 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 5% 16%;
+    --input: 240 5% 16%;
+    --ring: 352 100% 50%;
+
+    --radius: 0.125rem;
+
+    /* Racing tokens */
+    --asphalt: 240 6% 4%;
+    --tarmac: 240 5% 9%;
+    --kerb-red: 352 100% 50%;
+    --volt: 72 100% 50%;
+    --podium-gold: 45 100% 55%;
+    --podium-silver: 0 0% 75%;
+    --podium-bronze: 25 75% 50%;
+
+    --gradient-hero: linear-gradient(180deg, transparent 0%, hsl(var(--asphalt) / 0.6) 50%, hsl(var(--asphalt)) 100%);
+    --gradient-red: linear-gradient(135deg, hsl(var(--kerb-red)) 0%, hsl(352 100% 35%) 100%);
+    --gradient-volt: linear-gradient(135deg, hsl(var(--volt)) 0%, hsl(72 100% 35%) 100%);
+
+    --shadow-volt: 0 0 24px hsl(var(--volt) / 0.4);
+    --shadow-red: 0 0 24px hsl(var(--kerb-red) / 0.4);
+    --shadow-card: 0 8px 24px hsl(0 0% 0% / 0.5);
+
+    --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+    --sidebar-background: 240 6% 4%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 352 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 14%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 5% 16%;
+    --sidebar-ring: 352 100% 50%;
+  }
+
+  .dark {
+    /* same — app is always dark */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply dark;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    background-image:
+      radial-gradient(circle at 20% 0%, hsl(var(--kerb-red) / 0.06), transparent 40%),
+      radial-gradient(circle at 80% 100%, hsl(var(--volt) / 0.04), transparent 40%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: hsl(var(--volt));
+    color: hsl(var(--asphalt));
+  }
+}
+
+@layer utilities {
+  .font-display { font-family: 'Rajdhani', sans-serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+  .text-stroke {
+    -webkit-text-stroke: 1px hsl(var(--foreground));
+    color: transparent;
+  }
+
+  .skew-tag {
+    transform: skewX(-12deg);
+  }
+  .skew-tag > * {
+    display: inline-block;
+    transform: skewX(12deg);
+  }
+
+  .bg-checker {
+    background-image:
+      linear-gradient(45deg, hsl(var(--border)) 25%, transparent 25%),
+      linear-gradient(-45deg, hsl(var(--border)) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, hsl(var(--border)) 75%),
+      linear-gradient(-45deg, transparent 75%, hsl(var(--border)) 75%);
+    background-size: 8px 8px;
+    background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+  }
+
+  .glow-red { box-shadow: var(--shadow-red); }
+  .glow-volt { box-shadow: var(--shadow-volt); }
+}
