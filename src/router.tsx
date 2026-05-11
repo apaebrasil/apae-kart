@@ -15,26 +15,31 @@ export const router = createBrowserRouter([
     path: "/",
     Component: Index,
     loader: async () => {
-      await Promise.all([
-        queryClient.prefetchQuery({
-          queryKey: ["drivers"],
-          queryFn: async () => fetchDataset<Driver>({ datasetId: "cadPilotosKart" }),
-        }),
-        queryClient.prefetchQuery({
-          queryKey: ["drivers"],
-          queryFn: async () => fetchDataset<Race>({ datasetId: "cadProvas" }),
-        }),
-        queryClient.prefetchQuery({
-          queryKey: ["drivers"],
-          queryFn: async () => fetchDataset<News>({ datasetId: "cadNoticias" }),
-        }),
-        queryClient.prefetchQuery({
-          queryKey: ["results"],
-          queryFn: async () => fetchDataset<Results>({ datasetId: "cadResultadosKart" }),
-        }),
-      ]);
+      try {
+        await Promise.all([
+          queryClient.prefetchQuery({
+            queryKey: ["drivers"],
+            queryFn: async () => fetchDataset<Driver>({ datasetId: "cadPilotosKart" }),
+          }),
+          queryClient.prefetchQuery({
+            queryKey: ["drivers"],
+            queryFn: async () => fetchDataset<Race>({ datasetId: "cadProvas" }),
+          }),
+          queryClient.prefetchQuery({
+            queryKey: ["drivers"],
+            queryFn: async () => fetchDataset<News>({ datasetId: "cadNoticias" }),
+          }),
+          queryClient.prefetchQuery({
+            queryKey: ["results"],
+            queryFn: async () => fetchDataset<Results>({ datasetId: "cadResultadosKart" }),
+          }),
+        ]);
 
-      return null;
+        return null;
+      } catch (error) {
+        console.error("Error prefetching data:", error);
+        return null;
+      }
     },
   },
   {
