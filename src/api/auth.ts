@@ -33,6 +33,17 @@ const getAuthorizationHeaders = async (url: string, method: string) => {
   return oauth.toHeader(oauth.authorize(requestData, token));
 };
 
+/**
+ * ⚠️ AUTENTICAÇÃO AGORA VIA PROXY PHP
+ *
+ * A autenticação OAuth 1.0a foi movida para o proxy PHP (fluig-proxy.php)
+ * que roda no servidor (Hostinger). Isso é mais seguro pois as credenciais
+ * não são expostas no navegador.
+ *
+ * O código abaixo foi comentado e mantido apenas como referência histórica.
+ */
+
+/*
 // --- Interceptor de Requisição do Axios para OAuth 1.0a ---
 axiosApi.interceptors.request.use(
   async (config) => {
@@ -59,3 +70,4 @@ axiosApi.interceptors.request.use(
     return Promise.reject(error);
   },
 );
+*/

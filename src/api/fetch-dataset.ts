@@ -42,7 +42,6 @@ function parseError(error: unknown): string {
 
 export async function fetchDataset<T = DatasetRecord>({ datasetId, offset, limit, constraints = [] }: FetchDatasetProps): Promise<{ items: T[]; hasNext: boolean }> {
   try {
-    const base = "/dataset/api/v2/dataset-handle/search";
     const params = new URLSearchParams();
 
     params.set("datasetId", datasetId);
@@ -62,8 +61,7 @@ export async function fetchDataset<T = DatasetRecord>({ datasetId, offset, limit
       params.append("constraintsType", type);
     });
 
-    const url = `${base}?${params.toString()}`;
-    const response = await axiosApi.get<DatasetResponse<T>>(url);
+    const response = await axiosApi.get<DatasetResponse<T>>(`/?${params.toString()}`);
 
     return {
       items: response.data.values ?? [],
