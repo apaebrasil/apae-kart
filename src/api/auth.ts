@@ -46,42 +46,28 @@ const getAuthorizationHeaders = async (url: string, method: string) => {
   return oauth.toHeader(oauth.authorize({ url, method }, token));
 };
 
-// Interceptor de Requisição do Axios para OAuth 1.0a
+// Interceptor de Requisição do Axios para OAuth 1.0a (apenas em DEV)
 axiosApi.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    const method = config.method ? config.method.toUpperCase() : "GET";
+    // Em produção, o proxy PHP cuida da autenticação
+    // Então apenas fazemos OAuth em desenvolvimento
+    if (import.meta.env.DEV) {
+      const method = config.method ? config.method.toUpperCase() : "GET";
+      if (!config.url) return config;
 
-    // ✅ Guarda: se não tiver URL, deixa passar sem modificar
-    if (!config.url) {
-      return config;
-    }
-
-    const url = config.url;
-
-    if (!import.meta.env.DEV) {
-      // Evita duplo encoding — só reescreve se ainda não for URL de proxy
-      if (!url.startsWith("?endpoint=") && !url.startsWith("/proxy.php")) {
-        const [path, existingQS] = url.split("?");
-        let proxyUrl = `/proxy.php?endpoint=${encodeURIComponent(path)}&method=${method}`;
-        if (existingQS) proxyUrl += `&${existingQS}`;
-        config.url = proxyUrl;
+      const oauthURL = `${FLUIG_BASE_URL}${config.url}`;
+      try {
+        const authorizationHeader = await getAuthorizationHeaders(oauthURL, method);
+        config.headers = { ...(config.headers || {}), ...authorizationHeader } as AxiosRequestHeaders;
+      } catch {
+        return Promise.reject(new Error("Falha na autenticação OAuth 1.0a."));
       }
-
-      return config;
     }
-
-    // DEV — OAuth direto
-    const oauthURL = `${FLUIG_BASE_URL}${url}`;
-    try {
-      const authorizationHeader = await getAuthorizationHeaders(oauthURL, method);
-      config.headers = { ...(config.headers || {}), ...authorizationHeader } as AxiosRequestHeaders;
-    } catch {
-      return Promise.reject(new Error("Falha na autenticação OAuth 1.0a. "));
-    }
+    // Em produção, a URL é chamada normalmente e o proxy PHP responde
 
     return config;
   },
-  (error) => Promise.reject(error),
+  (error) => Promise.reject(error)
 );
 
 // Interceptor de resposta

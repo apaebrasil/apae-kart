@@ -61,7 +61,12 @@ export async function fetchDataset<T = DatasetRecord>({ datasetId, offset, limit
       params.append("constraintsType", type);
     });
 
-    const response = await axiosApi.get<DatasetResponse<T>>(`/?${params.toString()}`);
+    // Em produção chama /proxy.php, em DEV chama direto a API
+    const url = import.meta.env.DEV 
+      ? `/dataset/api/v2/dataset-handle/search?${params.toString()}`
+      : `/proxy.php?${params.toString()}`;
+    
+    const response = await axiosApi.get<DatasetResponse<T>>(url);
 
     return {
       items: response.data.values ?? [],
