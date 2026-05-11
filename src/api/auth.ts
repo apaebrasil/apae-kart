@@ -10,7 +10,7 @@ const getBaseURL = () => {
   if (import.meta.env.DEV) {
     return "";
   }
-  return "https://maroon-gnu-600298.hostingersite.com/";
+  return "https://maroon-gnu-600298.hostingersite.com";
 };
 
 // Instância do Axios
