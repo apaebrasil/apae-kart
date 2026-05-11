@@ -1,9 +1,26 @@
 import OAuth from "oauth-1.0a";
 import CryptoJs from "crypto-js";
+import axios, { type AxiosRequestHeaders, type InternalAxiosRequestConfig } from "axios";
 
-import { AxiosRequestHeaders } from "axios";
-import { env } from "@/zod-env";
-import { axiosApi } from "./axios";
+// URL do Fluig (usada para assinar requisições OAuth em desenvolvimento)
+const FLUIG_BASE_URL = "https://federacaonacional201538.fluig.cloudtotvs.com.br/fluig/";
+
+// Determina a base URL dependendo do ambiente
+const getBaseURL = () => {
+  if (import.meta.env.DEV) {
+    return "";
+  }
+  return "https://maroon-gnu-600298.hostingersite.com/";
+};
+
+// Instância do Axios
+export const axiosApi = axios.create({
+  baseURL: getBaseURL(),
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
 
 // Funções e configurações OAuth 1.0a
 const hashFunction = (baseString: string, key: string) => {
@@ -12,62 +29,80 @@ const hashFunction = (baseString: string, key: string) => {
 
 const oauth = new OAuth({
   consumer: {
-    key: env.VITE_CONSUMER_KEY,
-    secret: env.VITE_CONSUMER_SECRET,
+    key: import.meta.env.VITE_CONSUMER_KEY as string,
+    secret: import.meta.env.VITE_CONSUMER_SECRET as string,
   },
   signature_method: "HMAC-SHA1",
   hash_function: hashFunction,
 });
 
-// Retorna autenticação
+// Retorna autenticação OAuth
 const getAuthorizationHeaders = async (url: string, method: string) => {
   const token = {
-    key: env.VITE_ACCESS_TOKEN_TESTE,
-    secret: env.VITE_TOKEN_SECRET_TESTE,
-  };
-  const requestData = {
-    url,
-    method,
+    key: import.meta.env.VITE_ACCESS_TOKEN_TESTE as string,
+    secret: import.meta.env.VITE_TOKEN_SECRET_TESTE as string,
   };
 
-  return oauth.toHeader(oauth.authorize(requestData, token));
+  return oauth.toHeader(oauth.authorize({ url, method }, token));
 };
 
-/**
- * ⚠️ AUTENTICAÇÃO AGORA VIA PROXY PHP
- *
- * A autenticação OAuth 1.0a foi movida para o proxy PHP (fluig-proxy.php)
- * que roda no servidor (Hostinger). Isso é mais seguro pois as credenciais
- * não são expostas no navegador.
- *
- * O código abaixo foi comentado e mantido apenas como referência histórica.
- */
-
-/*
-// --- Interceptor de Requisição do Axios para OAuth 1.0a ---
+// Interceptor de Requisição do Axios para OAuth 1.0a
 axiosApi.interceptors.request.use(
-  async (config) => {
-    console.log("entrou aqui");
-
+  async (config: InternalAxiosRequestConfig) => {
     const method = config.method ? config.method.toUpperCase() : "GET";
-    const fullUrl = `${env.VITE_BASE_URL_TESTE}${config.url}`; //axios.getUri(config); // Obtém a URL completa que será usada na requisição
 
+    // ✅ Guarda: se não tiver URL, deixa passar sem modificar
+    if (!config.url) {
+      return config;
+    }
+
+    const url = config.url;
+
+    if (!import.meta.env.DEV) {
+      // Evita duplo encoding — só reescreve se ainda não for URL de proxy
+      if (!url.startsWith("?endpoint=") && !url.startsWith("/proxy.php")) {
+        const [path, existingQS] = url.split("?");
+        let proxyUrl = `/proxy.php?endpoint=${encodeURIComponent(path)}&method=${method}`;
+        if (existingQS) proxyUrl += `&${existingQS}`;
+        config.url = proxyUrl;
+      }
+
+      return config;
+    }
+
+    // DEV — OAuth direto
+    const oauthURL = `${FLUIG_BASE_URL}${url}`;
     try {
-      const authorizationHeader = await getAuthorizationHeaders(fullUrl, method);
-      // Adiciona os cabeçalhos de autorização à configuração da requisição
-      config.headers = {
-        ...(config.headers || {}),
-        ...authorizationHeader,
-      } as unknown as AxiosRequestHeaders;
-    } catch (error) {
-      console.error("Erro ao gerar cabeçalhos OAuth 1.0a:", error);
-      return Promise.reject(new Error("Falha na autenticação OAuth 1.0a."));
+      const authorizationHeader = await getAuthorizationHeaders(oauthURL, method);
+      config.headers = { ...(config.headers || {}), ...authorizationHeader } as AxiosRequestHeaders;
+    } catch {
+      return Promise.reject(new Error("Falha na autenticação OAuth 1.0a. "));
     }
 
     return config;
   },
+  (error) => Promise.reject(error),
+);
+
+// Interceptor de resposta
+axiosApi.interceptors.response.use(
+  (response) => response,
   (error) => {
+    console.error("❌ Response Error:", {
+      status: error.response?.status,
+      url: error.config?.url,
+      message: error.message,
+      data: error.response?.data,
+    });
+
+    if (error.message === "Network Error") {
+      if (import.meta.env.DEV) {
+        console.error("💡 DEV: Verifique o Vite Proxy e as credenciais OAuth");
+      } else {
+        console.error("💡 PROD: Verifique se o proxy.php está funcionando");
+      }
+    }
+
     return Promise.reject(error);
   },
 );
-*/
