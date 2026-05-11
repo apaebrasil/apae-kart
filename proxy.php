@@ -17,7 +17,7 @@ define('OAUTH_TOKEN',           '449651ad-cd8d-43c3-9d62-10077e069db0');
 define('OAUTH_TOKEN_SECRET',    '7192d223-95d7-4a1e-8761-2c1b9efa50285872bb60-a38b-4045-b09b-d3e19d26f944');
 
 // Para debug (descomente para ver logs)
-define('DEBUG_MODE', false);
+define('DEBUG_MODE', true);
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─── CORS HEADERS ─────────────────────────────────────────────────────────────
@@ -147,6 +147,8 @@ if ($response === false) {
     echo json_encode([
         'error' => 'Falha ao conectar com o servidor Fluig',
         'url' => $fullUrl,
+        'php_error' => error_get_last(),
+        'debug' => DEBUG_MODE ? true : false,
     ]);
     exit;
 }
@@ -154,11 +156,31 @@ if ($response === false) {
 // Validação básica da resposta
 if (empty($response)) {
     http_response_code(500);
-    echo json_encode(['error' => 'Resposta vazia do servidor Fluig']);
+    echo json_encode([
+        'error' => 'Resposta vazia do servidor Fluig',
+        'debug_info' => 'A API Fluig retornou uma resposta vazia',
+    ]);
     exit;
 }
 
-// Echo a resposta como está (JSON válido do Fluig)
+// Tenta fazer parse da resposta como JSON
+$decodedResponse = @json_decode($response, true);
+
+if ($statusCode >= 400) {
+    http_response_code($statusCode);
+    echo json_encode([
+        'error' => 'Erro na API Fluig',
+        'status' => $statusCode,
+        'response' => $decodedResponse ?? $response,
+        'debug' => DEBUG_MODE ? [
+            'url' => $fullUrl,
+            'raw_response' => substr($response, 0, 500),
+        ] : null,
+    ]);
+    exit;
+}
+
+// Success — Echo a resposta como está (JSON válido do Fluig)
 echo $response;
 $authHeader = 'OAuth ' . implode(', ', $authParts);
 

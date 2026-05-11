@@ -27,7 +27,11 @@ function parseError(error: unknown): string {
   // Erro vindo do Axios (resposta da API)
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
-    const message = error.response?.data?.message ?? error.message;
+    const data = error.response?.data;
+    const message = typeof data === 'object' && data !== null && 'error' in data 
+      ? (data as any).error 
+      : error.response?.data?.message ?? error.message;
+    
     return `[AxiosError] Status: ${status} | Mensagem: ${message}`;
   }
 
@@ -74,9 +78,16 @@ export async function fetchDataset<T = DatasetRecord>({ datasetId, offset, limit
     };
   } catch (error) {
     console.error(`Erro ao buscar dataset "${datasetId}":`, parseError(error));
-
-    // Se quiser ver o objeto completo também:
-    console.error("Detalhe completo:", error);
+    
+    // Log detalhado em caso de erro
+    if (axios.isAxiosError(error)) {
+      console.error("📋 Resposta completa do erro:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+      });
+    }
 
     return { items: [], hasNext: false };
   }
